@@ -1,0 +1,18 @@
+*- [CONVERTER] zl07.h*- [CONVERTER] Header File for zl07.scx#DEFINE C_DBFEMPTY  'Tabela je prazna, dodavanje sloga?'
+#DEFINE C_EDITS   'Molim vas zavrsite menjanje.'
+#DEFINE C_TOPFILE  'Pocetak tabele.'
+#DEFINE C_ENDFILE  'Kraj tabele.'
+#DEFINE C_BRTITLE  'Lociranje sloga'
+#DEFINE C_NOLOCK  'Ne mozete zauzeti slog - probajte kasnije.'
+#DEFINE C_ECANCEL  'Promene ponistene.'
+#DEFINE C_DELREC  'Brisanje odabranog sloga?'
+#DEFINE C_NOFEAT  'Nije jos raspolozivo.'
+#DEFINE C_NOWIZ   'Aplikacija nije raspoloziva.'
+#DEFINE C_MAKEREPO  'Kreiranje izvestaja.'
+#DEFINE C_NOREPO  'Ne mozete kreirati izvestaj.'
+#DEFINE C_DELNOTE   'Brisanje slogova...'
+#DEFINE C_READONLY   'Tabela se moze samo citati.Promene nisu dozvoljene.'
+#DEFINE C_NOTABLE   'Nijedna tabela nije selektovana. Otvorite tabelu.'
+#DEFINE C_BADEXPR  'Pogresan izraz.'
+#DEFINE C_LOCWIZ  'Locate WIZARD.APP:'
+#DEFINE C_MULTITABLE 'Dodavanje slogova nije omoguceno.'

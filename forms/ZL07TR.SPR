@@ -1,0 +1,17 @@
+*- [CONVERTER] Declare arraysEXTERNAL ARRAY nizpolja
+
+EXTERNAL PROC zl07tr.scx
+
+DO FORM "zl07tr.scx" NAME _0130HTHSW LINKED 
+
+*- [CONVERTER] Begin CLEANUP and other procedures from 2.x Form
+
+PROCEDURE sendmesg
+	PARAMETERS msg_string, w_cols, ROW
+	STORE (w_cols - LEN(msg_string))/2 TO COL
+	@ ROW, COL SAY msg_string
+	RETURN
+
+
+
+*- [CONVERTER] End CLEANUP and other procedures from 2.x Form

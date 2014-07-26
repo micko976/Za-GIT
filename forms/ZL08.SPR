@@ -1,0 +1,419 @@
+*- [CONVERTER] New INCLUDE file, with #DEFINEs#INCLUDE zl08.h
+
+*- [CONVERTER] Declare variables for record pointersPUBLIC _iconvJmglvGoToPlaceHolder
+PUBLIC _iconvTrbdetGoToPlaceHolder
+PUBLIC _iconvStsglvGoToPlaceHolder
+PUBLIC _iconvTrbzglGoToPlaceHolder
+PUBLIC _iconvDokbrojGoToPlaceHolder
+PUBLIC _iconvPrzglvGoToPlaceHolder
+PUBLIC _iconvOrgglvGoToPlaceHolder
+PUBLIC _iconvRazglvGoToPlaceHolder
+PUBLIC _iconvZalglvGoToPlaceHolder
+PUBLIC _iconvPlncnaGoToPlaceHolder
+PUBLIC _iconvAnlkrtGoToPlaceHolder
+PUBLIC _iconvTabGoToPlaceHolder
+PUBLIC _iconvRadglvGoToPlaceHolder
+
+EXTERNAL PROC zl08.scx
+
+DO FORM "zl08.scx" NAME _0130HNMNZ LINKED 
+
+*- [CONVERTER] Begin CLEANUP and other procedures from 2.x Form
+
+PROCEDURE readdeac
+	IF isediting
+		ACTIVATE WINDOW 'zl08'
+		WAIT WINDOW c_edits NOWAIT
+	ENDIF
+	IF !WVISIBLE(WOUTPUT())
+		CLEAR READ
+		RETURN .T.
+	ENDIF
+	RETURN .F.
+
+PROCEDURE readact
+
+	RELEASE WINDOW EXPO
+	IF !isediting
+		SELECT (m.wzalias)
+		SHOW GETS
+	ENDIF
+	DO REFRESH
+	RETURN
+
+PROCEDURE wizerrorhandler
+	* This very simple error handler is primarily intended
+	* to trap for General field OLE errors which may occur
+	* during editing from the MODIFY GENERAL window.
+	WAIT WINDOW MESSAGE()
+	RETURN
+
+
+PROCEDURE printrec
+	DO zl08stmp.spr
+	select trbzgl
+	go top
+	locate for trbzgl.trb=m.zatrb
+	if found()
+		select orgglv
+		go top
+		LOCATE FOR (trbzgl.orgodl=orgglv.org AND ALLTRIM(UPPER(orgglv.tip))=='O')
+		m.orgops1=orgglv.ops
+		go top
+		LOCATE FOR (trbzgl.org=orgglv.org AND ALLTRIM(UPPER(orgglv.tip))=='S')
+		m.ops=orgglv.ops
+		
+		if m.rad<>0
+			select radglv
+			go top
+			LOCATE FOR trbzgl.rad=radglv.rad
+			m.radops=radglv.ops
+		endif
+	endif
+	select trbdet
+	IF ekran=1
+	REPORT FORM zl08stmp.frx FOR (trbdet.trb=m.zatrb) PREVIEW
+	ENDIF
+	IF stampa=1
+	REPORT FORM zl08stmp.frx FOR (trbdet.trb=m.zatrb)  TO PRINTER NOCONSOLE
+	select trbzgl
+	go top
+	locate for m.zatrb=trbzgl.trb
+	if found()
+		replace trbzgl.stsslg with 30
+	endif
+	m.stsslg=30
+	m.stsops='Dokument {tampan'
+	show gets
+	ENDIF
+	RETURN
+
+
+PROCEDURE btn_val
+	PARAMETER m.btnname
+	DO CASE
+		CASE  m.btnname='TOP'
+			GO TOP
+			WAIT WINDOW c_topfile NOWAIT
+		CASE  m.btnname='PREV'
+			IF !BOF()
+				SKIP -1
+			ENDIF
+			IF BOF()
+				WAIT WINDOW c_topfile NOWAIT
+				GO TOP
+			ENDIF
+		CASE  m.btnname='NEXT'
+			IF !EOF()
+				SKIP 1
+			ENDIF
+			IF EOF()
+				WAIT WINDOW c_endfile NOWAIT
+				GO BOTTOM
+			ENDIF
+		CASE  m.btnname='END'
+			GO BOTTOM
+			WAIT WINDOW c_endfile NOWAIT
+		CASE  m.btnname='LOCATE'
+			DO zl08tr.spr
+		CASE  m.btnname='ADD'  AND !isediting &&add record
+			isediting=.T.
+			isadding=.T.
+			=edithand('ADD')
+			_CUROBJ=1
+			DO REFRESH
+			SHOW GETS
+			RETURN
+		CASE  m.btnname='EDIT'  AND !isediting &&edit record
+			IF EOF() OR BOF()
+				WAIT WINDOW c_endfile NOWAIT
+				RETURN
+			ENDIF
+			IF RLOCK()
+				isediting=.T.
+				_CUROBJ=1
+				DO REFRESH
+				RETURN
+			ELSE
+				WAIT WINDOW c_nolock
+			ENDIF
+		CASE m.btnname='EDIT'  AND isediting &&save record
+			IF isadding
+				=edithand('SAVE')
+			ELSE
+				if (trbzgl.stsslg>5 and trbzgl.stsslg<24)
+				m.uneo=lekari
+				m.datun= DATE()
+				GATHER MEMVAR MEMO
+				if alltrim(upper(m.pototp))=='D' and alltrim(m.tiptrb)=='Treb.'
+				select trbzgl
+				go top
+				locate for trbzgl.trb=m.trb		
+				select trbdet
+				go top
+				scan for m.trb=trbdet.trb
+				select zalglv
+				go top
+				locate for (trbdet.prz=zalglv.prz and m.org=zalglv.org)
+				if found()
+						replace trbzgl.stsslg with 25
+						replace trbzgl.ispdan with date()
+						
+						m.kolzal=zalglv.kolzal-trbdet.potkol
+						m.kolrez=zalglv.kolrez-trbdet.potkol
+						replace zalglv.kolrez with m.kolrez
+						replace zalglv.kolzal with m.kolzal
+				endif
+				select anlkrt
+				go top
+	scan for (trbzgl.org=anlkrt.org and alltrim(upper(trbdet.prz))==alltrim(upper(anlkrt.prz)))
+	pomzal=anlkrt.kolzal
+	endscan 
+				append blank
+				replace anlkrt.org with m.org, anlkrt.prz with trbdet.prz, ;
+				anlkrt.promdan with date(), anlkrt.promtim with time(), ;
+				anlkrt.promvrst with 2, anlkrt.dok with str(trbdet.trb), anlkrt.kolzal with (pomzal-trbdet.potkol), ;
+				anlkrt.kolprom with trbdet.potkol, anlkrt.plncna with trbdet.plncna, ;
+				anlkrt.raz with trbzgl.raz, anlkrt.opsprom with 'Trebovanje', ;
+				anlkrt.uneo with lekari, anlkrt.vrdprom with (trbdet.potkol*trbdet.plncna)
+				replace anlkrt.pomtag with	(dtoc(date())+time())			  
+				endscan 
+				else
+				wait window 'Ovo nije trebovanje'
+				select trbzgl
+				endif
+			select trbzgl
+			else 
+			wait window "Dokument se nemoze potvrditi/pogledaj status"
+			endif && endif za uslov stsslg<24
+			ENDIF
+			UNLOCK
+			isediting=.F.
+			isadding=.F.
+			DO REFRESH
+		CASE m.btnname='DELETE'  AND isediting 	&&cancel record
+			IF isadding
+				=edithand('CANCEL')
+			ENDIF
+			isediting=.F.
+			isadding=.F.
+			UNLOCK
+			WAIT WINDOW c_ecancel NOWAIT
+			DO REFRESH
+		CASE m.btnname='DELETE'
+			IF EOF() OR BOF()
+				WAIT WINDOW c_endfile NOWAIT
+				RETURN
+			ENDIF
+			IF fox_alert(c_delrec)
+				m.stsslg = 9
+				m.datun = DATE()
+				m.uneo = lekari
+				GATHER MEMVAR MEMO
+				IF EOF()
+					WAIT WINDOW c_endfile NOWAIT
+					GO BOTTOM
+				ENDIF
+			ENDIF
+		CASE m.btnname='PRINT'
+		 	select orgglv
+			set order to tag org
+			select trbdet
+			set order to tag trb
+		 	select trbzgl
+		 	set relation to trb into trbdet
+			DO printrec
+			PRINTFLG=1
+			RETURN
+		CASE m.btnname='EXIT'
+			m.bailout=.T.	&&this is needed if used with FoxApp
+			CLEAR READ
+			RETURN
+	ENDCASE
+	SCATTER MEMVAR MEMO
+		select orgglv
+		go top
+	    locate for (m.org=orgglv.org AND ALLTRIM(UPPER(orgglv.tip))=='S')
+	    m.orgops=orgglv.ops
+	    go top
+	    locate for (m.orgodl=orgglv.org AND ALLTRIM(UPPER(orgglv.tip))=='O')
+	    m.orgops1=orgglv.ops
+	    select razglv
+		go top
+	    locate for m.raz=razglv.raz 
+	    m.razops=razglv.ops
+	    select stsglv
+		go top
+		locate for m.stsslg=stsglv.stsslg
+		if found()
+			m.stsops=stsglv.ops
+		endif
+		select trbzgl
+		SHOW GETS
+	RETURN
+
+
+PROCEDURE REFRESH
+	DO CASE
+		CASE m.isreadonly AND RECCOUNT()=0
+			SHOW GETS DISABLE
+			SHOW GET exit_btn ENABLE
+		CASE m.isreadonly
+			SHOW GET add_btn DISABLE
+			SHOW GET del_btn DISABLE
+			SHOW GET edit_btn DISABLE
+		CASE (RECCOUNT()=0 OR EOF()) AND !m.isediting
+		if printflg=0
+			SHOW GETS DISABLE
+			SHOW GET add_btn ENABLE
+			SHOW GET exit_btn ENABLE
+		endif
+		CASE m.isediting
+			SHOW GET find_drop DISABLE
+			SHOW GET top_btn DISABLE
+			SHOW GET prev_btn DISABLE
+			SHOW GET loc_btn DISABLE
+			SHOW GET next_btn DISABLE
+			SHOW GET end_btn DISABLE
+			SHOW GET add_btn DISABLE
+			SHOW GET prnt_btn DISABLE
+			SHOW GET exit_btn DISABLE
+			SHOW GET edit_btn,1 PROMPT "\<Potvrda"
+			SHOW GET del_btn,1 PROMPT "\<Storno"
+			ON KEY LABEL ESCAPE DO btn_val WITH 'DELETE'
+			IF !isadding
+				SHOW GET m.trb DISABLE
+			ENDIF
+			printflg=0
+			RETURN
+		OTHERWISE
+			SHOW GET edit_btn,1 PROMPT "\<Menjaj"
+			SHOW GET del_btn,1 PROMPT "\<Bri{i"
+			SHOW GETS ENABLE
+	ENDCASE
+	IF m.is2table
+		SHOW GET add_btn DISABLE
+	ENDIF
+	ON KEY LABEL ESCAPE
+	RETURN
+
+
+PROCEDURE edithand
+	PARAMETER m.paction
+	* procedure handles edits
+	DO CASE
+		CASE m.paction = 'ADD'
+			SCATTER MEMVAR MEMO BLANK
+		CASE m.paction = 'SAVE'
+			m.uneo=lekari
+			m.datun= DATE()
+			m.stsslg= 1
+			*
+	
+	select dokbroj
+	locate for alltrim(upper(dokbroj.dok))=='TRB'
+	m.trb=dokbroj.brojac
+	pombroj=dokbroj.brojac+1
+	replace dokbroj.brojac with pombroj
+	select trbzgl
+	show gets
+
+			*
+			INSERT INTO trbzgl FROM MEMVAR
+			CASE m.paction = 'CANCEL'
+			* nothing here
+	ENDCASE
+	RETURN
+
+PROCEDURE fox_alert
+	PARAMETER wzalrtmess
+	PRIVATE alrtbtn
+	m.alrtbtn=2
+	DEFINE WINDOW _qec1ij2t7 AT 0,0 SIZE 8,50 ;
+		FONT  "Times_lat", 12 STYLE 'B' ;
+		FLOAT NOCLOSE NOMINIMIZE DOUBLE TITLE WTITLE()
+	MOVE WINDOW _qec1ij2t7 CENTER
+	ACTIVATE WINDOW _qec1ij2t7 NOSHOW
+	@ 2,(50-TXTWIDTH(wzalrtmess))/2 SAY wzalrtmess;
+		FONT "Times_lat", 12 STYLE "B"
+	@ 6,18 GET m.alrtbtn ;
+		PICTURE "@*HT \<DA;\?\!\<NE" ;
+		SIZE 1.769,8.667,1.333 ;
+		FONT "Times_lat", 9 STYLE "B"
+	ACTIVATE WINDOW _qec1ij2t7
+	READ CYCLE MODAL
+	RELEASE WINDOW _qec1ij2t7
+	RETURN m.alrtbtn=1
+
+
+PROCEDURE pdialog
+	DEFINE WINDOW _qjn12zbvh ;
+		AT  0.000, 0.000  ;
+		SIZE 13.231,54.800 ;
+		FONT "Times_lat", 12 ;
+		FLOAT NOCLOSE MINIMIZE SYSTEM
+	MOVE WINDOW _qjn12zbvh CENTER
+	ACTIVATE WINDOW _qjn12zbvh NOSHOW
+	@ 2.846,33.600 SAY "Iznos:"  ;
+		FONT "Times_lat", 12;
+		STYLE "BT"
+	@ 2.846,4.800 SAY "[tampa:"  ;
+		FONT "Times_lat", 12 ;
+		STYLE "BT"
+	@ 4.692,7.200 GET m.p_recs ;
+		PICTURE "@*RVN \<Teku}i slog;\<Svi slogovi" ;
+		SIZE 1.308,18.500,0.308 ;
+		DEFAULT 1 ;
+		FONT "Times_lat", 12 ;
+		STYLE "BT"
+	@ 4.692,36.000 GET m.p_output ;
+		PICTURE "@*RVN \<[tampa;\<Prikaz" ;
+		SIZE 1.308,12.000,0.308 ;
+		DEFAULT 1 ;
+		FONT "Times_lat", 12 ;
+		STYLE "BT"
+	@ 10.154,16.600 GET m.prnt_btn ;
+		PICTURE "@*HT [\<tampa;\<Poni{ti" ;
+		SIZE 1.769,8.667,0.667 ;
+		DEFAULT 1 ;
+		FONT "Times_lat", 12;
+		STYLE "B"
+	ACTIVATE WINDOW _qjn12zbvh
+	READ CYCLE MODAL
+	RELEASE WINDOW _qjn12zbvh
+	RETURN
+
+
+PROCEDURE loc_dlog
+	PRIVATE gfields,i
+	*DEFINE WINDOW wzlocate FROM 1,1 TO 20,40;
+	*	SYSTEM GROW  FONT "Times_Lat",8
+	DEFINE WINDOW wzlocate FROM 0,0 TO WLROW('zl08')-0.5,SCOLS()  ;
+		FONT "Times_Lat",8
+	*	MOVE WINDOW wzlocate CENTER
+	m.gfields=SET('FIELDS',2)
+	IF !EMPTY(RELATION(1))
+		SET FIELDS ON
+		IF m.gfields # 'GLOBAL'
+			SET FIELDS global
+		ENDIF
+		IF EMPTY(fldlist())
+			m.i=1
+			DO WHILE !EMPTY(objvar(m.i))
+				IF ATC('M.',objvar(m.i))=0
+					SET FIELDS TO (objvar(m.i))
+				ENDIF
+				m.i = m.i + 1
+			ENDDO
+		ENDIF
+	ENDIF
+	BROWSE WINDOW wzlocate NOEDIT NODELETE ;
+		NOMENU
+	SET FIELDS &gfields
+	SET FIELDS OFF
+	RELEASE WINDOW wzlocate
+	RETURN
+
+
+
+*- [CONVERTER] End CLEANUP and other procedures from 2.x Form

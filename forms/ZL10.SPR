@@ -1,0 +1,16 @@
+*- [CONVERTER] Declare variables for record pointersPUBLIC _iconvJmglvGoToPlaceHolder
+PUBLIC _iconvTrbdetGoToPlaceHolder
+PUBLIC _iconvStsglvGoToPlaceHolder
+PUBLIC _iconvTrbzglGoToPlaceHolder
+PUBLIC _iconvDokbrojGoToPlaceHolder
+PUBLIC _iconvPrzglvGoToPlaceHolder
+PUBLIC _iconvOrgglvGoToPlaceHolder
+PUBLIC _iconvRazglvGoToPlaceHolder
+PUBLIC _iconvZalglvGoToPlaceHolder
+PUBLIC _iconvPlncnaGoToPlaceHolder
+PUBLIC _iconvAnlkrtGoToPlaceHolder
+PUBLIC _iconvTabGoToPlaceHolder
+
+EXTERNAL PROC zl10.scx
+
+DO FORM "zl10.scx" NAME _0130HNPYB LINKED 

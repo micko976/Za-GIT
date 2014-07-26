@@ -1,0 +1,5 @@
+m.tim1=TIME()
+m.tim2=TIME()
+ WAIT WINDOW HOUR(TIME())
+
+ 
